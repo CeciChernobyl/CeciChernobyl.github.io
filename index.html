@@ -298,6 +298,21 @@ const firebaseConfig = {
             const data = snapshot.val() || [];
             missions = Array.isArray(data) ? data : Object.values(data);
             currentDescriptions = {};
+            // Si no hay misiones en la base de datos, agrega una de ejemplo
+            if (missions.length === 0) {
+                missions.push({
+                    name: "Entrenamiento Godslayer",
+                    description: "...",
+                    cliente: "Dagda",
+                    recompensa: "Pago ---",
+                    completed: false
+                });
+                currentDescriptions[0] = [
+                    missions[0].description,
+                    "Esto es una descripcion breve"
+                ];
+                saveMissions();
+            }
             renderMissions();
         });
 
