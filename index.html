@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administracion de anima</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Agrega Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0a0a0a;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #00bfff;
+            text-shadow: 0 0 10px #00bfff;
+        }
+
+        .mission-list {
+            width: 80%;
+            max-width: 800px;
+        }
+
+        .mission-card {
+            background-color: #1a1a1a;
+            border: 2px solid #00bfff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
+        }
+
+        .mission-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #00bfff;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .mission-title {
+            font-size: 1.5em;
+            color: #00ff00;
+        }
+
+        .mission-client {
+            font-style: italic;
+            color: #ffd700;
+        }
+
+        .mission-description {
+            margin: 10px 0;
+            color: #ffffff;
+            transition: opacity 0.5s;
+        }
+
+        .mission-reward {
+            font-weight: bold;
+            color: #ff4500;
+        }
+
+        .mission-status {
+            margin-top: 10px;
+        }
+
+        .accept-btn, .complete-btn {
+            background-color: #00bfff;
+            color: #000000;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .accepted-btn {
+            background-color: #ffd700;
+            color: #000000;
+        }
+
+        .complete-btn {
+            background-color: #00ff00;
+        }
+
+        .accept-btn:hover, .accepted-btn:hover {
+            background-color: #00ff00;
+        }
+
+        .complete-btn:hover {
+            background-color: #ffd700;
+        }
+
+        .admin-section {
+            width: 80%;
+            max-width: 800px;
+            background-color: #1a1a1a;
+            border: 2px solid #00bfff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
+        }
+
+        .admin-form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-form label {
+            margin-top: 10px;
+            color: #00bfff;
+        }
+
+        .admin-form input, .admin-form textarea {
+            background-color: #333333;
+            color: #ffffff;
+            border: 1px solid #00bfff;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 5px;
+        }
+
+        .admin-form button {
+            background-color: #00bfff;
+            color: #000000;
+            border: none;
+            padding: 10px;
+            margin-top: 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .admin-form button:hover {
+            background-color: #00ff00;
+        }
+
+        .edit-delete-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .edit-btn, .delete-btn {
+            background-color: #ffd700;
+            color: #000000;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .edit-btn:hover {
+            background-color: #00ff00;
+        }
+
+        .delete-btn {
+            background-color: #ff4500;
+        }
+
+        .delete-btn:hover {
+            background-color: #ff0000;
+        }
+
+        .mission-card::before {
+            content: "★";
+            color: #ffd700;
+            font-size: 1.2em;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .mission-card {
+            position: relative;
+        }
+
+        .excel-section {
+            width: 80%;
+            max-width: 800px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .export-btn, .import-btn {
+            background-color: #ffd700;
+            color: #000000;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        .export-btn:hover, .import-btn:hover {
+            background-color: #00ff00;
+        }
+
+        .music-control {
+            margin-top: 20px;
+        }
+
+        .music-control button {
+            background-color: #00bfff;
+            color: #000000;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .music-control button:hover {
+            background-color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <h1>Anima Nexus Misiones</h1>
+
+    <div class="excel-section">
+        <button class="export-btn" onclick="exportToExcel()">Exportar lista</button>
+        <input type="file" id="importFile" accept=".xlsx, .xls" style="display: none;" onchange="importFromExcel(event)">
+        <button class="import-btn" onclick="document.getElementById('importFile').click()">Importar de Excel</button>
+    </div>
+
+    <div class="admin-section">
+        <h2>Creacion principal de mision</h2>
+        <form class="admin-form" id="missionForm">
+            <label for="missionId">Mision ID (se auto-crea):</label>
+            <input type="text" id="missionId" readonly>
+
+            <label for="name">Nombre de la mision:</label>
+            <input type="text" id="name" required>
+
+            <label for="description">Descripcion:</label>
+            <textarea id="description" required></textarea>
+
+            <label for="cliente">Cliente:</label>
+            <input type="text" id="cliente" required>
+
+            <label for="recompensa">Pago/limite:</label>
+            <input type="text" id="recompensa" required>
+
+            <label for="altDescription">Descripción Alternativa:</label>
+            <textarea id="altDescription"></textarea>
+
+            <button type="submit">Guardar mision</button>
+        </form>
+    </div>
+
+    <div class="mission-list" id="missionList">
+        <!-- misiones renderizadas -->
+    </div>
+
+    <div class="music-control">
+        <button id="playPauseBtn">Iniciar</button>
+    </div>
+
+    <audio id="acceptSound" src="https://kappa.vgmsite.com/soundtracks/among-us-sound-effects/gbxmbgwhtr/Panel%20Admin%20Card%20Deny.mp3" preload="auto"></audio>
+    <audio id="backgroundMusic" src="https://vgmsite.com/soundtracks/shin-megami-tensei-v-original-soundtrack/xscocdrsgh/2-05.%20Quest%20~Blindly~.mp3" loop preload="auto"></audio>
+
+    <script>
+        // 1. Configura tu Firebase aquí (reemplaza con tus datos)
+const firebaseConfig = {
+  apiKey: "AIzaSyCU7KBcNLWEVP1zzUxw5XpsnUUNqADR-9M",
+  authDomain: "anima-nexus.firebaseapp.com",
+  databaseURL: "https://anima-nexus-default-rtdb.firebaseio.com",
+  projectId: "anima-nexus",
+  storageBucket: "anima-nexus.firebasestorage.app",
+  messagingSenderId: "467109560767",
+  appId: "1:467109560767:web:31e486b9be6d7836f3e10a",
+  measurementId: "G-0PKE8QGQF9"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let missions = [];
+        const form = document.getElementById('missionForm');
+        const missionList = document.getElementById('missionList');
+        let currentDescriptions = {};
+        const acceptSound = document.getElementById('acceptSound');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        let isMusicPlaying = false;
+
+        // Escucha cambios en tiempo real
+        db.ref('missions').on('value', snapshot => {
+            const data = snapshot.val() || [];
+            missions = Array.isArray(data) ? data : Object.values(data);
+            currentDescriptions = {};
+            renderMissions();
+        });
+
+        // Guarda misiones en Firebase
+        function saveMissions() {
+            db.ref('missions').set(missions);
+        }
+
+        function renderMissions() {
+            missionList.innerHTML = '';
+            missions.forEach((mission, index) => {
+                const card = document.createElement('div');
+                card.classList.add('mission-card');
+
+                currentDescriptions[index] = [
+                    mission.description, 
+                    mission.altDescription || mission.description
+                ];
+                let currentDescIndex = currentDescriptions[index].index || 0;
+                const isCompleted = mission.completed || false;
+
+                let statusButton = '';
+                if (isCompleted) {
+                    statusButton = `
+                        <button class="complete-btn" disabled>Misión Terminada</button>
+                        <button class="accept-btn" onclick="resetMission(${index})">Reiniciar</button>
+                    `;
+                } else if (mission.justAccepted) {
+                    statusButton = '<button class="accepted-btn" disabled>Misión Aceptada</button>';
+                } else {
+                    statusButton = `<button class="accept-btn" onclick="acceptMission(${index}, this)">Aceptar Misión</button>`;
+                }
+
+                card.innerHTML = `
+                    <div class="mission-header">
+                        <span class="mission-title">${mission.name}</span>
+                        <span class="mission-client">Cliente: ${mission.cliente}</span>
+                    </div>
+                    <p class="mission-description" data-index="${index}">${currentDescriptions[index][currentDescIndex]}</p>
+                    <p class="mission-reward">Recompensa/Límite: ${mission.recompensa}</p>
+                    <div class="mission-status">
+                        ${statusButton}
+                    </div>
+                    <div class="edit-delete-buttons">
+                        <button class="edit-btn" onclick="editMission(${index})">Edit</button>
+                        <button class="delete-btn" onclick="deleteMission(${index})">Delete</button>
+                    </div>
+                `;
+                missionList.appendChild(card);
+            });
+        }
+
+        function rotateDescriptions() {
+            missions.forEach((_, index) => {
+                const descElement = document.querySelector(`.mission-description[data-index="${index}"]`);
+                if (descElement && currentDescriptions[index]) {
+                    let currentIndex = currentDescriptions[index].index || 0;
+                    currentIndex = (currentIndex + 1) % currentDescriptions[index].length;
+                    currentDescriptions[index].index = currentIndex;
+                    descElement.textContent = currentDescriptions[index][currentIndex];
+                }
+            });
+        }
+
+        setInterval(rotateDescriptions, 30000); // Rotate every 30 seconds
+
+        window.acceptMission = function(index, button) {
+            if (!button.disabled) {
+                acceptSound.play().catch(error => console.log("Error playing sound:", error));
+                missions[index].justAccepted = true;
+                renderMissions(); // Muestra el botón "Misión Aceptada"
+                setTimeout(() => {
+                    missions[index].completed = true;
+                    delete missions[index].justAccepted;
+                    saveMissions(); // Guarda y renderiza como "Misión Terminada"
+                }, 1000);
+            }
+        };
+
+        window.resetMission = function(index) {
+            missions[index].completed = false;
+            saveMissions();
+        };
+
+        playPauseBtn.addEventListener('click', () => {
+            if (isMusicPlaying) {
+                backgroundMusic.pause();
+                playPauseBtn.textContent = 'Iniciar';
+            } else {
+                backgroundMusic.play().catch(error => console.log("Error al reproducir:", error));
+                playPauseBtn.textContent = 'Pausar';
+            }
+            isMusicPlaying = !isMusicPlaying;
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('missionId').value;
+            const name = document.getElementById('name').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const altDescription = document.getElementById('altDescription').value.trim();
+            const cliente = document.getElementById('cliente').value.trim();
+            const recompensa = document.getElementById('recompensa').value.trim();
+
+            if (!name || !description || !cliente || !recompensa) {
+                alert('Por favor, completa todos los campos requeridos.');
+                return;
+            }
+
+            if (id) {
+                const index = parseInt(id);
+                missions[index] = { 
+                    name, 
+                    description, 
+                    altDescription, 
+                    cliente, 
+                    recompensa, 
+                    completed: missions[index].completed || false 
+                };
+                currentDescriptions[index] = [description, altDescription || description];
+            } else {
+                missions.push({ 
+                    name, 
+                    description, 
+                    altDescription, 
+                    cliente, 
+                    recompensa, 
+                    completed: false 
+                });
+                currentDescriptions[missions.length - 1] = [description, altDescription || description];
+            }
+
+            saveMissions();
+            form.reset();
+            document.getElementById('missionId').value = '';
+        });
+
+        window.editMission = function(index) {
+            const mission = missions[index];
+            document.getElementById('missionId').value = index;
+            document.getElementById('name').value = mission.name;
+            document.getElementById('description').value = mission.description;
+            document.getElementById('altDescription').value = mission.altDescription || '';
+            document.getElementById('cliente').value = mission.cliente;      // <-- aquí
+            document.getElementById('recompensa').value = mission.recompensa; // <-- aquí
+        };
+
+        window.deleteMission = function(index) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta misión?')) {
+                missions.splice(index, 1);
+                delete currentDescriptions[index];
+                saveMissions();
+            }
+        };
+
+        function exportToExcel() {
+            const data = missions.map(mission => ({
+                Nombre: mission.name,
+                Descripcion: mission.description,
+                Cliente: mission.cliente,
+                Recompensa: mission.recompensa,
+                Completada: mission.completed ? 'Si' : 'No'
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Missions');
+            XLSX.writeFile(wb, 'smt_missions.xlsx');
+        }
+
+        function importFromExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const importedData = XLSX.utils.sheet_to_json(worksheet);
+                missions = importedData.map(row => ({
+                    name: row.Nombre,
+                    description: row.Descripcion,
+                    cliente: row.Cliente,
+                    recompensa: row.Recompensa,
+                    completed: row.Completada === 'Si'
+                }));
+                currentDescriptions = {};
+                missions.forEach((mission, index) => {
+                    currentDescriptions[index] = [
+                        mission.description, 
+                        mission.altDescription || mission.description
+                    ];
+                });
+                saveMissions();
+                alert('Mision importada');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        if (missions.length === 0) {
+            missions.push({
+                name: "Entrenamiento Godslayer",
+                description: "...",
+                cliente: "Dagda",
+                recompensa: "Pago ---",
+                completed: false
+            });
+            currentDescriptions[0] = [
+                missions[0].description,
+                "Esto es una descripcion breve"
+            ];
+            saveMissions();
+        }
+    </script>
+</body>
+</html>
