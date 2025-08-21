@@ -511,21 +511,7 @@ const firebaseConfig = {
             };
             reader.readAsArrayBuffer(file);
         }
-
-        if (missions.length === 0) {
-            missions.push({
-                name: "Entrenamiento Godslayer",
-                description: "...",
-                cliente: "Dagda",
-                recompensa: "Pago ---",
-                completed: false
-            });
-            currentDescriptions[0] = [
-                missions[0].description,
-                "Esto es una descripcion breve"
-            ];
-            saveMissions();
-        }
     </script>
 </body>
 </html>
+
